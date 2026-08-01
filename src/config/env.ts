@@ -5,11 +5,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   MONGODB_URI: z
     .string()
-    .min(1, { message: "MONGODB_URI is required" })
-    .refine(
-      (val) => val.startsWith("mongodb://") || val.startsWith("mongodb+srv://"),
-      { message: "MONGODB_URI must start with mongodb:// or mongodb+srv://" }
-    ),
+    .default("mongodb://localhost:27017/attendance_db"),
   JWT_ACCESS_SECRET: z
     .string()
     .min(32, { message: "JWT_ACCESS_SECRET must be at least 32 characters long" })

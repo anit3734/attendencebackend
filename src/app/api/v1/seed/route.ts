@@ -6,6 +6,7 @@ import { Employee } from "@/models/employee.model";
 import { PasswordUtil } from "@/utils/password.util";
 import { ROLES } from "@/constants/roles";
 import { HTTP_STATUS } from "@/constants/http-status";
+import mongoose from "mongoose";
 
 export const runtime = "nodejs";
 
@@ -13,12 +14,20 @@ export const GET = async () => {
   try {
     await connectDB();
 
-    // 1. Check or Create Company
+    // 1. Check or Create Admin User first to get its ID (for createdBy)
+    let user = await User.findOne({ email: "admin@company.com" });
+    const adminId = user ? user._id : new mongoose.Types.ObjectId();
+    const companyId = user && user.companyId ? user.companyId : new mongoose.Types.ObjectId();
+
+    // 2. Check or Create Company
     let company = await Company.findOne({ code: "APEX01" });
     if (!company) {
       company = await Company.create({
+        _id: companyId,
         name: "ApexWork Inc",
         code: "APEX01",
+        email: "admin@company.com",
+        createdBy: adminId,
         office: {
           latitude: 28.629768,
           longitude: 77.37921,
@@ -37,11 +46,11 @@ export const GET = async () => {
       });
     }
 
-    // 2. Check or Create Admin User
-    let user = await User.findOne({ email: "admin@company.com" });
+    // 3. Create/Update Admin User
     if (!user) {
       const hashedPassword = await PasswordUtil.hashPassword("admin123");
       user = await User.create({
+        _id: adminId,
         name: "System Administrator",
         email: "admin@company.com",
         password: hashedPassword,
@@ -50,7 +59,6 @@ export const GET = async () => {
         isActive: true,
       });
     } else {
-      // Update password to admin123 if user exists
       const hashedPassword = await PasswordUtil.hashPassword("admin123");
       user.password = hashedPassword;
       user.isActive = true;

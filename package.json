@@ -1,0 +1,41 @@
+{
+  "name": "attendance-management-backend",
+  "version": "1.0.0",
+  "description": "Production Ready Attendance Management Backend System",
+  "main": "src/app/api/v1/health/route.ts",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "attendance",
+    "management",
+    "nextjs15",
+    "clean-architecture",
+    "mongoose",
+    "zod"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "dotenv": "^16.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.2",
+    "next": "^15.3.3",
+    "pino": "^9.6.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^22.13.14",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.5",
+    "typescript": "^5.7.3"
+  }
+}

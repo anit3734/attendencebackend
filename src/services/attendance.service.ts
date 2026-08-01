@@ -5,6 +5,7 @@ import { GeofenceUtil } from "@/utils/geofence.util";
 import { ClockInInput, ClockOutInput } from "@/validations/attendance.validation";
 import { BadRequestError, NotFoundError, ConflictError } from "@/errors/app-error";
 import { IAttendance, CLOCK_IN_STATUS, DAY_STATUS, DayStatus } from "@/models/attendance.model";
+import { Leave } from "@/models/leave.model";
 import mongoose from "mongoose";
 
 export class AttendanceService {
@@ -204,10 +205,23 @@ export class AttendanceService {
     if (userId) {
       const metrics = await this.attendanceRepository.getUserMonthlySummary(userId, startDate, endDate);
       const employee = await this.employeeRepository.findByUserId(userId);
+      
+      // Calculate actual approved leaves this month
+      const monthPrefix = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
+      const approvedLeaves = await Leave.find({
+        userId: new mongoose.Types.ObjectId(userId),
+        status: "APPROVED",
+        $or: [
+          { startDate: { $regex: `^${monthPrefix}` } },
+          { endDate: { $regex: `^${monthPrefix}` } }
+        ]
+      });
+      const leaveThisMonth = approvedLeaves.reduce((sum, leave) => sum + leave.totalDays, 0);
+
       userMetrics = {
         presentDays: metrics?.totalPresent || 0,
         totalMonthDays: lastDay,
-        leaveThisMonth: 0, // Placeholder
+        leaveThisMonth,
         leaveRemaining: 30.0, // Legacy fallback
         leaveBalances: employee?.leaveBalances || { casual: 8, sick: 5, earned: 12 },
         onTimeArrivals: metrics?.onTimeArrivals || 0,

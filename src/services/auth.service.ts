@@ -4,6 +4,8 @@ import { JwtUtil, IJwtPayload } from "@/utils/jwt.util";
 import { RegisterInput, LoginInput } from "@/validations/auth.validation";
 import { ConflictError, UnauthorizedError, NotFoundError } from "@/errors/app-error";
 import { IUser } from "@/models/user.model";
+import { Employee } from "@/models/employee.model";
+import { Company } from "@/models/company.model";
 import { logger } from "@/lib/logger";
 import mongoose from "mongoose";
 
@@ -48,8 +50,10 @@ export class AuthService {
 
     await this.userRepository.updateRefreshToken(user._id.toString(), refreshToken);
 
+    const userResponse = await this.formatUserResponse(user);
+
     return {
-      user: user.toJSON() as unknown as Partial<IUser>,
+      user: userResponse,
       accessToken,
       refreshToken,
     };
@@ -82,8 +86,10 @@ export class AuthService {
 
     await this.userRepository.updateRefreshToken(user._id.toString(), refreshToken);
 
+    const userResponse = await this.formatUserResponse(user);
+
     return {
-      user: user.toJSON() as unknown as Partial<IUser>,
+      user: userResponse,
       accessToken,
       refreshToken,
     };
@@ -132,11 +138,59 @@ export class AuthService {
     await this.userRepository.updateRefreshToken(userId, null);
   }
 
-  public async getProfile(userId: string): Promise<Partial<IUser>> {
+  public async getProfile(userId: string): Promise<Record<string, any>> {
     const user = await this.userRepository.findById(userId);
     if (!user) {
       throw new NotFoundError("User profile not found");
     }
-    return user.toJSON() as unknown as Partial<IUser>;
+    return await this.formatUserResponse(user);
+  }
+
+  public async changePassword(userId: string, input: { oldPassword: string; newPassword: string }): Promise<void> {
+    const user = await this.userRepository.findById(userId, true);
+    if (!user || !user.password) {
+      throw new NotFoundError("User not found");
+    }
+
+    const isMatch = await PasswordUtil.comparePassword(input.oldPassword, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedError("Incorrect current password");
+    }
+
+    const hashedPassword = await PasswordUtil.hashPassword(input.newPassword);
+    user.password = hashedPassword;
+    await user.save();
+  }
+
+  private async formatUserResponse(user: IUser): Promise<Record<string, any>> {
+    const userObj = user.toJSON() as Record<string, any>;
+    
+    // Fetch Employee info
+    const employee = await Employee.findOne({ userId: user._id });
+    if (employee) {
+      userObj.designation = employee.designation || "Executive";
+      userObj.department = employee.department || "General";
+      userObj.employeeId = employee.employeeId || "EMP001";
+      userObj.phone = employee.phone || user.phone || "+91 9876543210";
+    } else {
+      userObj.designation = "System Administrator";
+      userObj.department = "Management";
+      userObj.employeeId = "EMP001";
+      userObj.phone = user.phone || "+91 9876543210";
+    }
+
+    // Fetch Company info
+    if (user.companyId) {
+      const company = await Company.findById(user.companyId);
+      if (company) {
+        userObj.companyCode = company.code || "APEX01";
+        userObj.companyName = company.name || "ApexWork Inc";
+      }
+    } else {
+      userObj.companyCode = "APEX01";
+      userObj.companyName = "ApexWork Inc";
+    }
+
+    return userObj;
   }
 }

@@ -69,4 +69,19 @@ export class AuthController {
       HTTP_STATUS.OK
     );
   };
+
+  public changePassword = async (req: Request): Promise<NextResponse> => {
+    const userPayload = await authGuard(req);
+    const body = await req.json();
+    await this.authService.changePassword(userPayload.userId, {
+      oldPassword: body.oldPassword,
+      newPassword: body.newPassword,
+    });
+
+    return ResponseHelper.success(
+      {},
+      "Password changed successfully",
+      HTTP_STATUS.OK
+    );
+  };
 }

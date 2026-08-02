@@ -205,24 +205,19 @@ export class AttendanceService {
     if (userId) {
       const metrics = await this.attendanceRepository.getUserMonthlySummary(userId, startDate, endDate);
       const employee = await this.employeeRepository.findByUserId(userId);
-      
-      // Calculate actual approved leaves this month
-      const monthPrefix = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
       const approvedLeaves = await Leave.find({
-        userId: new mongoose.Types.ObjectId(userId),
+        userId,
         status: "APPROVED",
-        $or: [
-          { startDate: { $regex: `^${monthPrefix}` } },
-          { endDate: { $regex: `^${monthPrefix}` } }
-        ]
+        startDate: { $gte: startDate },
+        endDate: { $lte: endDate },
       });
-      const leaveThisMonth = approvedLeaves.reduce((sum, leave) => sum + leave.totalDays, 0);
+      const leaveThisMonthCount = approvedLeaves.reduce((acc, curr) => acc + (curr.totalDays || 0), 0);
 
       userMetrics = {
         presentDays: metrics?.totalPresent || 0,
         totalMonthDays: lastDay,
-        leaveThisMonth,
-        leaveRemaining: 30.0, // Legacy fallback
+        leaveThisMonth: leaveThisMonthCount,
+        leaveRemaining: (employee?.leaveBalances?.casual || 8) + (employee?.leaveBalances?.sick || 5) + (employee?.leaveBalances?.earned || 12),
         leaveBalances: employee?.leaveBalances || { casual: 8, sick: 5, earned: 12 },
         onTimeArrivals: metrics?.onTimeArrivals || 0,
         lateArrivals: metrics?.lateArrivals || 0,

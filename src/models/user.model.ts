@@ -8,6 +8,7 @@ export interface IUser extends Document {
   password?: string;
   role: UserRole;
   companyId?: mongoose.Types.ObjectId | null;
+  phone?: string;
   refreshToken?: string | null;
   isActive: boolean;
   createdAt: Date;
@@ -47,6 +48,11 @@ const UserSchema = new Schema<IUser>(
       ref: "Company",
       default: null,
       index: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: "+91 9876543210",
     },
     refreshToken: {
       type: String,

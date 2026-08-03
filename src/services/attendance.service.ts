@@ -136,6 +136,14 @@ export class AttendanceService {
       company.office.longitude
     );
 
+    // Geofencing verification for clock-out (same strict check as clock-in)
+    if (company.settings.requireGeofence && !company.settings.allowRemoteClockIn) {
+      if (distanceInMeters > company.office.radiusInMeters) {
+        throw new BadRequestError(
+          `Cannot clock out outside office geofence. Current distance: ${Math.round(distanceInMeters)}m (Allowed: ${company.office.radiusInMeters}m)`
+        );
+      }
+    }
     const clockOutTime = new Date();
     const clockInTime = new Date(attendance.clockIn.time);
 

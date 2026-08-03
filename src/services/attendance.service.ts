@@ -213,6 +213,9 @@ export class AttendanceService {
       });
       const leaveThisMonthCount = approvedLeaves.reduce((acc, curr) => acc + (curr.totalDays || 0), 0);
 
+      const targetCompanyId = companyId || employee?.companyId?.toString();
+      const company = targetCompanyId ? await this.companyRepository.findById(targetCompanyId) : null;
+
       userMetrics = {
         presentDays: metrics?.totalPresent || 0,
         totalMonthDays: lastDay,
@@ -221,6 +224,12 @@ export class AttendanceService {
         leaveBalances: employee?.leaveBalances || { casual: 8, sick: 5, earned: 12 },
         onTimeArrivals: metrics?.onTimeArrivals || 0,
         lateArrivals: metrics?.lateArrivals || 0,
+        officeLocation: company?.office || {
+          latitude: 28.629768,
+          longitude: 77.37921,
+          radiusInMeters: 100,
+          address: "Sector 63, Noida",
+        },
       };
     }
 

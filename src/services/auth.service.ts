@@ -168,27 +168,28 @@ export class AuthService {
     // Fetch Employee info
     const employee = await Employee.findOne({ userId: user._id });
     if (employee) {
-      userObj.designation = employee.designation || "Executive";
-      userObj.department = employee.department || "General";
-      userObj.employeeId = employee.employeeId || "EMP001";
-      userObj.phone = employee.phone || user.phone || "+91 9876543210";
+      userObj.designation = employee.designation || "N/A";
+      userObj.department = employee.department || "N/A";
+      userObj.employeeId = employee.employeeId || "N/A";
+      userObj.phone = employee.phone || user.phone || "N/A";
     } else {
-      userObj.designation = "System Administrator";
-      userObj.department = "Management";
-      userObj.employeeId = "EMP001";
-      userObj.phone = user.phone || "+91 9876543210";
+      userObj.designation = "N/A";
+      userObj.department = "N/A";
+      userObj.employeeId = "N/A";
+      userObj.phone = user.phone || "N/A";
     }
 
     // Fetch Company info
     if (user.companyId) {
       const company = await Company.findById(user.companyId);
       if (company) {
-        userObj.companyCode = company.code || "APEX01";
-        userObj.companyName = company.name || "ApexWork Inc";
+        userObj.companyCode = company.code || "N/A";
+        userObj.companyName = company.name || "N/A";
+        userObj.companyOffice = company.office;
       }
     } else {
-      userObj.companyCode = "APEX01";
-      userObj.companyName = "ApexWork Inc";
+      userObj.companyCode = "N/A";
+      userObj.companyName = "N/A";
     }
 
     return userObj;
